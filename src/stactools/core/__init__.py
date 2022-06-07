@@ -1,6 +1,7 @@
 # flake8: noqa
 
 from stactools.core.add import add_item
+from stactools.core.addasset import add_asset_to_item
 from stactools.core.addraster import add_raster_to_item
 from stactools.core.copy import (
     copy_catalog,
@@ -14,6 +15,7 @@ from stactools.core.merge import merge_all_items, merge_items
 
 __all__ = [
     "add_item",
+    "add_asset_to_item",
     "add_raster_to_item",
     "copy_catalog",
     "layout_catalog",
