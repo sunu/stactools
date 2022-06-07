@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `stac addasset` command to add an asset to an item ([#300](https://github.com/stac-utils/stactools/pull/300))
+
 ## [v0.3.1]
 
 ### Added
