@@ -44,6 +44,10 @@ runs:
       if: matrix.python-version == '3.10'
       run: pip install --pre rasterio
       shell: bash -l {0}
-    - name: Setup upterm session
+    - name: Install gdal again if python 3.10
       if: matrix.python-version == '3.10'
-      uses: mxschmitt/action-tmate@v3
+      run: conda update gdal -n test --force-reinstall
+      shell: bash -l {0}
+    # - name: Setup tmate session
+    #   if: matrix.python-version == '3.10'
+    #   uses: mxschmitt/action-tmate@v3
