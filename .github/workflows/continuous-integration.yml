@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - debug-build-fail
   pull_request:
 
 env:
@@ -16,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        python-version: ["3.10"]
     defaults:
       run:
         shell: bash -l {0}
@@ -29,143 +30,143 @@ jobs:
         run: ./scripts/update
       - name: Test
         run: ./scripts/test
-  extra-requires:
-    name: Extra requires
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
-    defaults:
-      run:
-        shell: bash -l {0}
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/setup
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install with extra_requires
-        run: pip install '.[all]'
-      - name: Install development dependencies
-        run: pip install -r requirements-dev.txt
-      - name: Test
-        run: ./scripts/test
-  minimum-versions:
-    name: Minimum versions
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.7", "3.8", "3.9"]
-    defaults:
-      run:
-        shell: bash -l {0}
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/setup
-        with:
-          python-version: ${{ matrix.python-version }}
-          pip-cache-hash: ${{ hashFiles('requirements-min.txt', 'requirements-dev.txt') }}
-      - name: Install minimum requirements
-        run: pip install -r requirements-min.txt
-      - name: Install the package
-        run: pip install .
-      - name: Install development dependencies
-        run: pip install -r requirements-dev.txt
-      - name: Check minimum requirements
-        run: scripts/check_minimum_requirements
-      - name: Test
-        run: scripts/test
-  pre-release-versions:
-    name: Pre-release versions
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    strategy:
-      matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
-    defaults:
-      run:
-        shell: bash -l {0}
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/setup
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Update
-        run: scripts/update
-      - name: Install pre-release versions of rasterio and pystac
-        run: pip install -U --pre pystac rasterio
-      - name: Run tests
-        run: unset PROJ_LIB && scripts/test
-  codecov:
-    name: Codecov
-    needs:
-      - standard
-      - extra-requires
-      - minimum-versions
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Execute linters and test suites
-        run: ./docker/cibuild
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          file: ./coverage.xml
-          fail_ci_if_error: false
-  docker:
-    name: Docker
-    needs:
-      - standard
-      - extra-requires
-      - minimum-versions
-    permissions:
-      contents: read
-      packages: write
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ${{ env.DOCKER_REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Docker meta main
-        id: meta-main
-        uses: docker/metadata-action@v4
-        with:
-          images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-      - name: Build and push main
-        uses: docker/build-push-action@v3
-        with:
-          context: .
-          file: docker/Dockerfile
-          target: main
-          # Only push docker images if the event is a push to `main`
-          push: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
-          tags: ${{ steps.meta-main.outputs.tags }}
-          labels: ${{ steps.meta-main.outputs.labels }}
-      - name: Docker meta dev
-        id: meta-dev
-        uses: docker/metadata-action@v4
-        with:
-          images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}
-          flavor: |
-            suffix=-dev
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-      - name: Build and push dev
-        uses: docker/build-push-action@v3
-        with:
-          context: .
-          file: docker/Dockerfile
-          target: dev
-          # Only push docker images if the event is a push to `main`
-          push: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
-          tags: ${{ steps.meta-dev.outputs.tags }}
-          labels: ${{ steps.meta-dev.outputs.labels }}
+  # extra-requires:
+  #   name: Extra requires
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     matrix:
+  #       python-version: ["3.7", "3.8", "3.9", "3.10"]
+  #   defaults:
+  #     run:
+  #       shell: bash -l {0}
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: ./.github/setup
+  #       with:
+  #         python-version: ${{ matrix.python-version }}
+  #     - name: Install with extra_requires
+  #       run: pip install '.[all]'
+  #     - name: Install development dependencies
+  #       run: pip install -r requirements-dev.txt
+  #     - name: Test
+  #       run: ./scripts/test
+  # minimum-versions:
+  #   name: Minimum versions
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     matrix:
+  #       python-version: ["3.7", "3.8", "3.9"]
+  #   defaults:
+  #     run:
+  #       shell: bash -l {0}
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: ./.github/setup
+  #       with:
+  #         python-version: ${{ matrix.python-version }}
+  #         pip-cache-hash: ${{ hashFiles('requirements-min.txt', 'requirements-dev.txt') }}
+  #     - name: Install minimum requirements
+  #       run: pip install -r requirements-min.txt
+  #     - name: Install the package
+  #       run: pip install .
+  #     - name: Install development dependencies
+  #       run: pip install -r requirements-dev.txt
+  #     - name: Check minimum requirements
+  #       run: scripts/check_minimum_requirements
+  #     - name: Test
+  #       run: scripts/test
+  # pre-release-versions:
+  #   name: Pre-release versions
+  #   runs-on: ubuntu-latest
+  #   continue-on-error: true
+  #   strategy:
+  #     matrix:
+  #       python-version: ["3.7", "3.8", "3.9", "3.10"]
+  #   defaults:
+  #     run:
+  #       shell: bash -l {0}
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: ./.github/setup
+  #       with:
+  #         python-version: ${{ matrix.python-version }}
+  #     - name: Update
+  #       run: scripts/update
+  #     - name: Install pre-release versions of rasterio and pystac
+  #       run: pip install -U --pre pystac rasterio
+  #     - name: Run tests
+  #       run: unset PROJ_LIB && scripts/test
+  # codecov:
+  #   name: Codecov
+  #   needs:
+  #     - standard
+  #     - extra-requires
+  #     - minimum-versions
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - name: Execute linters and test suites
+  #       run: ./docker/cibuild
+  #     - name: Upload coverage to Codecov
+  #       uses: codecov/codecov-action@v3
+  #       with:
+  #         token: ${{ secrets.CODECOV_TOKEN }}
+  #         file: ./coverage.xml
+  #         fail_ci_if_error: false
+  # docker:
+  #   name: Docker
+  #   needs:
+  #     - standard
+  #     - extra-requires
+  #     - minimum-versions
+  #   permissions:
+  #     contents: read
+  #     packages: write
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v3
+  #     - name: Login to GitHub Container Registry
+  #       uses: docker/login-action@v2
+  #       with:
+  #         registry: ${{ env.DOCKER_REGISTRY }}
+  #         username: ${{ github.actor }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
+  #     - name: Docker meta main
+  #       id: meta-main
+  #       uses: docker/metadata-action@v4
+  #       with:
+  #         images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}
+  #         tags: |
+  #           type=ref,event=branch
+  #           type=ref,event=pr
+  #     - name: Build and push main
+  #       uses: docker/build-push-action@v3
+  #       with:
+  #         context: .
+  #         file: docker/Dockerfile
+  #         target: main
+  #         # Only push docker images if the event is a push to `main`
+  #         push: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+  #         tags: ${{ steps.meta-main.outputs.tags }}
+  #         labels: ${{ steps.meta-main.outputs.labels }}
+  #     - name: Docker meta dev
+  #       id: meta-dev
+  #       uses: docker/metadata-action@v4
+  #       with:
+  #         images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}
+  #         flavor: |
+  #           suffix=-dev
+  #         tags: |
+  #           type=ref,event=branch
+  #           type=ref,event=pr
+  #     - name: Build and push dev
+  #       uses: docker/build-push-action@v3
+  #       with:
+  #         context: .
+  #         file: docker/Dockerfile
+  #         target: dev
+  #         # Only push docker images if the event is a push to `main`
+  #         push: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+  #         tags: ${{ steps.meta-dev.outputs.tags }}
+  #         labels: ${{ steps.meta-dev.outputs.labels }}
