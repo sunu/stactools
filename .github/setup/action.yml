@@ -46,4 +46,4 @@ runs:
       shell: bash -l {0}
     - name: Setup upterm session
       if: matrix.python-version == '3.10'
-      uses: lhotari/action-upterm@v1
+      uses: mxschmitt/action-tmate@v3
